@@ -5,6 +5,40 @@ import { expectNoOverflow, fillExample, mockModel } from './helpers';
 
 test.beforeEach(async ({ page }) => mockModel(page));
 
+test('known v2 model details are localized and never attributed to demo or an unknown version', async ({ page }, testInfo) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+  let metadata = { ...demoModelInfo, modelVersion: 'MedPredict-SBP-mlp-v2',
+    predictionType: 'estimated_current_measurement', demo: false };
+  await page.route('**/api/v1/model/info', (route) => route.fulfill({ json: metadata }));
+  await page.goto('/#/model');
+  await expect(page).toHaveURL(`${testInfo.project.use.baseURL}/#/model`);
+  await expect(page).toHaveTitle(copies.ru.pageTitle);
+  await expect(page.locator('vite-error-overlay')).toHaveCount(0);
+  for (const language of ['ru', 'kk', 'en'] as const) {
+    if (language !== 'ru') {
+      await page.locator('.language-picker summary').click();
+      await page.getByRole('button', { name: language === 'kk' ? 'Қазақша' : 'English', exact: true }).click();
+    }
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(copies[language].pages.model);
+    await expect(page.locator('.model-details dd')).toHaveText(copies[language].pages.sbpV2Rows.map((row) => row[1]!));
+    await expectNoOverflow(page);
+    await page.screenshot({ path: `/private/tmp/medpredict-model-details-${testInfo.project.name}-${language}.png`, fullPage: true });
+  }
+  metadata = { ...metadata, demo: true };
+  await page.reload();
+  await expect(page.locator('.mode-label')).toHaveText(copies.ru.serverDemo);
+  await expect(page.locator('.page-intro')).toContainText(copies.ru.pages.modelIntro);
+  await expect(page.locator('.model-details')).not.toContainText('NHANES');
+  metadata = { ...metadata, demo: false, modelVersion: 'another-model-v2' };
+  await page.reload();
+  await expect(page.locator('.page-intro')).toContainText(copies.ru.pages.modelIntro);
+  await expect(page.locator('.model-details')).not.toContainText('NHANES');
+  await expect(page.locator('.model-details')).not.toContainText('Ridge');
+  expect(errors).toEqual([]);
+});
+
 test('typed real adapter sends the exact payload, guards rapid submission and preserves precision', async ({ page }) => {
   let count = 0;
   await page.route('**/api/v1/predictions', async (route) => {

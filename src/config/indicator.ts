@@ -5,6 +5,11 @@ export function isDemoResponse(value: { demo?: boolean; modelVersion?: string } 
   return value?.demo === true || value?.modelVersion === 'demo-example';
 }
 
+export function isKnownSbpModel(model: ModelInfo | undefined): boolean {
+  return model?.modelVersion === 'MedPredict-SBP-mlp-v2'
+    && model.predictionType === 'estimated_current_measurement' && model.demo === false;
+}
+
 // Preliminary example from the report; no medical ranges have been approved.
 export const demoModelInfo: ModelInfo = {
   indicatorName: 'Систолическое давление',

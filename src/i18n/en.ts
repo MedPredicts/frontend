@@ -141,6 +141,16 @@ export const en: Copy = {
     "consent": "I agree to save this prediction in history",
     "model": "About the model",
     "modelIntro": "Model parameters require confirmation from the team. No numerical metrics have been invented.",
+    "sbpV2Rows": [
+      ["Target measurement", "Experimental estimate of current systolic blood pressure, not a monitor measurement or a future forecast."],
+      ["Dataset", "CDC NHANES 2017–March 2020; 3,318 participants. Train / validation / test: 2,324 / 497 / 497."],
+      ["Studied population", "US participants aged 18–79 with complete data and positive fasting weights. Applicability to Kazakhstan’s population has not been established."],
+      ["Model version", "MedPredict-SBP-mlp-v2"],
+      ["Evaluation method", "PyTorch MLP 5 → 32 → 16 → 1. Five features: age, sex, BMI, total cholesterol, and fasting plasma glucose; both laboratory inputs in mmol/L. Preprocessing fitted on train only; selection used validation."],
+      ["Metrics", "Internal test, n=497: weighted MAE 11.225 mmHg for MLP and 11.268 for Ridge. A robust MLP advantage has not been established; average error is not an interval for an individual result."],
+      ["Ranges and categories", "API bounds describe training support, not clinical reference ranges. No diagnoses or risk categories are defined."],
+      ["Limitations", "At measured SBP ≥150 mmHg, all 42 of 42 test estimates were too low; weighted MAE was 41.366 mmHg. No clinical validation. The model is not intended for diagnosis, treatment, or changing medications."]
+    ],
     "modelRows": [
       [
         "Target measurement",
