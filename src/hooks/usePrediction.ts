@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormValues, FieldErrors, ModelInfo, Prediction, PredictionApi, PredictionInput } from '../types';
 import { configuredApi } from '../config/environment';
 import { ApiError, errorMessage } from '../api/errors';
@@ -43,10 +43,16 @@ export function usePrediction(language: Language = 'ru') {
 
   useEffect(() => () => request.current?.abort(), []);
 
-  function invalidate() {
+  const invalidate = useCallback(() => {
     request.current?.abort();
     request.current = null;
     setState({ status: 'idle' });
+  }, []);
+
+  function replaceValues(next: FormValues) {
+    invalidate();
+    setValues(next);
+    setErrors({});
   }
 
   function change(key: string, value: string) {
@@ -106,5 +112,5 @@ export function usePrediction(language: Language = 'ru') {
     setReload((count) => count + 1);
   }
 
-  return { metadata, values, errors, state, change, submit, cancel, invalidate, retryMetadata };
+  return { metadata, values, errors, state, change, replaceValues, submit, cancel, invalidate, retryMetadata };
 }
