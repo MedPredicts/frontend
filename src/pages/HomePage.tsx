@@ -12,12 +12,13 @@ export function HomePage() {
   const [language, setLanguage] = useState<Language>('ru');
   const [retrying, setRetrying] = useState(false);
   const copy = copies[language];
-  const flow = usePrediction();
+  const flow = usePrediction(language);
   const form = useRef<HTMLFormElement>(null);
   const formHeading = useRef<HTMLHeadingElement>(null);
   const demo = mode === 'demo';
   const retryAction = flow.state.status === 'error' || (flow.state.status === 'loading' && retrying);
   const model = flow.metadata.status === 'ready' ? demo ? localizedDemoModel(copy) : flow.metadata.model : undefined;
+  const serverDemo = !demo && model?.modelVersion === 'demo-example';
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -41,7 +42,7 @@ export function HomePage() {
       <div className="header-inner">
         <a className="brand" href="#main" aria-label={copy.brandLink}><img className="brand-logo" src="/logo.png" alt={copy.brand} width="994" height="414" /></a>
         <nav aria-label={copy.navigation}><a href="#how-it-works">{copy.how}</a><a href="#about">{copy.about}</a></nav>
-        <div className="header-actions"><span className="mode-label">{demo ? copy.demo : mode === 'real' ? copy.real : copy.unconfigured}</span>
+        <div className="header-actions"><span className="mode-label">{demo ? copy.demo : serverDemo ? copy.serverDemo : mode === 'real' ? copy.real : copy.unconfigured}</span>
           <LanguagePicker language={language} copy={copy} onChange={setLanguage} /></div>
       </div>
     </header>
@@ -70,6 +71,7 @@ export function HomePage() {
             <p>{demo ? copy.preliminary : model?.indicatorName}</p>
           </div></div>
           {demo && <p className="contract-note"><Icon name="info" />{copy.contractPending}</p>}
+          {serverDemo && <p className="contract-note"><Icon name="info" />{copy.serverDemoNote}</p>}
           {flow.metadata.status === 'loading' ? <p className="metadata-status" role="status">{copy.metadataLoading}</p>
             : flow.metadata.status === 'error' ? <div className="metadata-error" role="alert">
               <h3>{copy.metadataErrorTitle}</h3><p>{translateMessage(flow.metadata.message, copy)}</p>

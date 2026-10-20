@@ -64,6 +64,7 @@ export function reportFilename(date: Date): string {
 
 export function createReportPdf(report: Report, assets: ReportAssets, date: Date): jsPDF {
   const { model, result, input, demo, language } = report;
+  const example = demo || result.modelVersion === 'demo-example';
   if (!Number.isFinite(result.predictedValue) || (!demo && result.unit !== model.unit)) throw new Error('Invalid PDF result');
   const copy = copies[language];
   const doc = new jsPDF({ format: 'a4', unit: 'mm', compress: true, putOnlyUsedFonts: true });
@@ -99,7 +100,7 @@ export function createReportPdf(report: Report, assets: ReportAssets, date: Date
   paragraph(copy.reportTitle, 23, true);
   paragraph(copy.studentProject, 10);
   paragraph(`${copy.reportDate}: ${date.toLocaleString(language === 'kk' ? 'kk-KZ' : language === 'ru' ? 'ru-RU' : 'en-GB')}`, 9);
-  if (demo) paragraph(copy.reportDemo, 11, true);
+  if (example) paragraph(copy.reportDemo, 11, true);
   paragraph(model.indicatorName, 15, true);
   paragraph(copy.formTitle, 12, true);
 
@@ -140,7 +141,7 @@ export function createReportPdf(report: Report, assets: ReportAssets, date: Date
   if (y + 35 > 275) nextPage();
   paragraph(copy.resultTitle, 12, true);
   paragraph(`${formatPrediction(result.predictedValue, model.decimalPlaces, language)} ${demo ? model.unit : result.unit}`, 22, true);
-  if (result.modelVersion) paragraph(`${demo ? copy.demoVersion : copy.modelVersion}: ${result.modelVersion}`, 9);
+  if (result.modelVersion) paragraph(`${example ? copy.demoVersion : copy.modelVersion}: ${result.modelVersion}`, 9);
   y += 4;
   paragraph(`${copy.disclaimer}.`, 10);
   if (!demo && result.disclaimer && result.disclaimer !== copy.disclaimer) paragraph(result.disclaimer, 9);

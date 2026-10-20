@@ -61,6 +61,7 @@ interface Props {
 
 export function ResultPanel({ state, copy, language, model, demo, onEdit, onCancel }: Props) {
   const heading = useRef<HTMLHeadingElement>(null);
+  const example = demo || (state.status === 'success' && state.result.modelVersion === 'demo-example');
   useEffect(() => {
     if (state.status === 'success') heading.current?.focus();
   }, [state.status]);
@@ -69,11 +70,11 @@ export function ResultPanel({ state, copy, language, model, demo, onEdit, onCanc
     <div className="section-heading"><span className="section-number" aria-hidden="true">02</span><h2 id="result-heading">{copy.resultTitle}</h2></div>
     <div className="result-content" aria-live="polite" aria-atomic="true">
       {state.status === 'success' && model ? <div className="success-result">
-        {demo && <p className="result-tag">{copy.demoResult}</p>}
+        {example && <p className="result-tag">{copy.demoResult}</p>}
         <h3 tabIndex={-1} ref={heading}>{model.indicatorName}</h3>
         <p className="prediction-value"><span>{formatPrediction(state.result.predictedValue, model.decimalPlaces, language)}</span><span className="prediction-unit">{demo ? model.unit : state.result.unit}</span></p>
-        {state.result.modelVersion && <p className="model-version">{demo ? copy.demoVersion : copy.modelVersion}: {state.result.modelVersion}</p>}
-        {demo && <p className="demo-explanation">{copy.demoExplanation}</p>}
+        {state.result.modelVersion && <p className="model-version">{example ? copy.demoVersion : copy.modelVersion}: {state.result.modelVersion}</p>}
+        {example && <p className="demo-explanation">{copy.demoExplanation}</p>}
         <div className="result-disclaimer"><Icon name="info" /><p>{copy.disclaimer}.
           {!demo && state.result.disclaimer && state.result.disclaimer !== copy.disclaimer && <span className="server-disclaimer">{state.result.disclaimer}</span>}
         </p></div>
