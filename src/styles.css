@@ -40,6 +40,18 @@ nav a:hover { color: var(--text); }
 .language-check { margin-left: auto; font-size: 24px; }
 
 .intro-section { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; padding: 46px 38px 29px; align-items: center; }
+.landing-hero { grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); padding-top: 64px; }
+.landing-preview { min-height: 270px; padding: 27px 30px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); box-shadow: 0 18px 45px rgba(24,59,120,.08); }
+.landing-preview-top { display: flex; align-items: center; justify-content: space-between; color: var(--primary); font-size: 14px; font-weight: 750; letter-spacing: .02em; }
+.landing-preview-top span:last-child { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 50%; font-size: 18px; }
+.landing-preview-label { max-width: 230px; margin-top: 48px; color: var(--text); font-size: 25px; line-height: 1.22; font-weight: 700; letter-spacing: -.5px; }
+.landing-preview-line { display: grid; grid-template-columns: 1fr .7fr .42fr; gap: 6px; margin-top: 24px; }
+.landing-preview-line span { height: 7px; border-radius: 99px; background: var(--primary); }
+.landing-preview-line span:nth-child(2) { background: var(--accent); }
+.landing-preview-line span:nth-child(3) { background: var(--border); }
+.landing-preview-flow { display: flex; justify-content: space-between; margin-top: 24px; color: var(--text-muted); font-size: 12px; font-weight: 700; }
+.landing-preview-text { margin-top: 17px; color: var(--text); font-size: 14px; line-height: 1.45; }
+.landing-preview-note { margin-top: 7px; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
 h1 { font-size: clamp(32px, 3.2vw, 44px); line-height: 1.12; letter-spacing: -1.5px; font-weight: 750; }
 .hero-copy > p { max-width: 565px; color: var(--text-muted); font-size: 18px; line-height: 1.5; margin: 14px 0 22px; }
 .button { display: inline-flex; justify-content: center; align-items: center; gap: 18px; min-height: 52px; padding: 13px 24px; border-radius: 13px; font-size: 16px; line-height: 1.4; font-weight: 650; transition: background-color .15s, border-color .15s; }
@@ -145,6 +157,7 @@ h1 { font-size: clamp(32px, 3.2vw, 44px); line-height: 1.12; letter-spacing: -1.
   .mode-label { grid-column: 1 / -1; grid-row: 3; justify-self: start; font-size: 12px; padding: 8px 12px; }
   .container { padding: 0 24px; }
   .intro-section { grid-template-columns: 1fr; gap: 36px; }
+  .landing-preview { max-width: 580px; }
   .hero-copy > p { max-width: 580px; }
   .steps h2 { font-size: 15px; }
   .intro-disclaimer { margin-top: 24px; }
@@ -161,6 +174,9 @@ h1 { font-size: clamp(32px, 3.2vw, 44px); line-height: 1.12; letter-spacing: -1.
   nav { font-size: 13px; }
   .container { padding: 0 18px; }
   .intro-section { padding: 32px 0 24px; }
+  .landing-hero { padding-top: 36px; }
+  .landing-preview { min-height: 245px; padding: 22px; border-radius: 16px; }
+  .landing-preview-label { margin-top: 36px; font-size: 22px; }
   h1 { font-size: 32px; line-height: 1.15; letter-spacing: -1px; }
   .hero-copy > p { font-size: 15px; margin: 18px 0 22px; }
   .steps { gap: 14px; }

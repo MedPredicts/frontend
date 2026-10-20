@@ -48,12 +48,20 @@ export function HomePage() {
       </div>
     </header>
     <main id="main" className="container" tabIndex={-1}>
-      <section className="intro-section" aria-labelledby="hero-heading">
+      <section className="intro-section landing-hero" aria-labelledby="hero-heading">
         <div className="hero-copy">
           <h1 id="hero-heading">{copy.hero[0]}<br /><span>{copy.hero[1]}</span></h1>
           <p>{copy.intro}</p>
           <button type="button" className="button button-primary" onClick={goToForm}>{copy.goToForm}<Icon name="arrow" /></button>
         </div>
+        <aside className="landing-preview" aria-label={copy.estimateResult}>
+          <div className="landing-preview-top"><span>MedPredict</span><span aria-hidden="true">↗</span></div>
+          <p className="landing-preview-label">{copy.estimateResult}</p>
+          <div className="landing-preview-line" aria-hidden="true"><span /><span /><span /></div>
+          <div className="landing-preview-flow"><span>01</span><span>02</span><span>03</span></div>
+          <p className="landing-preview-text">{copy.realPrivacy}</p>
+          <p className="landing-preview-note">{copy.privacyDetail}</p>
+        </aside>
         <div id="how-it-works" className="how-it-works">
           <ol className="steps" aria-label={copy.how}>
             {copy.steps.map((step, index) => <li key={step.title}>
