@@ -82,6 +82,53 @@ test('metadata failure blocks form and can be retried', async ({ page }) => {
   await expect(page.getByLabel('Возраст')).toBeVisible();
 });
 
+test('MODEL_UNAVAILABLE explains the missing server model and blocks prediction', async ({ page }) => {
+  let posts = 0;
+  await page.route('**/api/v1/model/info', (route) => route.fulfill({ status: 503,
+    json: { error: 'MODEL_UNAVAILABLE', message: 'Unavailable model' } }));
+  await page.route('**/api/v1/predictions', () => { posts++; });
+  await page.goto('/');
+  await expect(page.getByRole('alert')).toContainText('Модель на сервере недоступна.');
+  await expect(page.getByRole('button', { name: 'Получить учебный прогноз' })).toHaveCount(0);
+  await page.locator('.language-picker summary').click();
+  await page.getByRole('button', { name: 'Қазақша', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Сервердегі модель қолжетімсіз.');
+  expect(posts).toBe(0);
+});
+
+test('server demo is labelled while preserving HTTP privacy and server units', async ({ page }) => {
+  await page.route('**/api/v1/model/info', (route) => route.fulfill({ json: demoModelInfo }));
+  await page.route('**/api/v1/predictions', (route) => route.fulfill({ json: {
+    predictedValue: 134.2, unit: 'мм рт. ст.', modelVersion: 'demo-example', disclaimer: 'DEMO: fixed server example.',
+  } }));
+  await page.goto('/');
+  await expect(page.getByText('API · серверное демо', { exact: true })).toBeVisible();
+  await expect(page.locator('.contract-note')).toContainText('обученная модель не используется');
+  await fillExample(page);
+  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await expect(page.getByText('Фиксированный демонстрационный пример', { exact: true })).toBeVisible();
+  await expect(page.getByText('Версия демопримера: demo-example')).toBeVisible();
+  await expect(page.locator('.privacy')).toHaveText('Данные отправляются серверу для прогноза.');
+  await expect(page.locator('.server-disclaimer')).toContainText('DEMO: fixed server example.');
+  await expectNoOverflow(page);
+});
+
+test('selected UI language reaches the backend without clearing the form', async ({ page }) => {
+  await page.goto('/');
+  await fillExample(page);
+  await page.locator('.language-picker summary').click();
+  await page.getByRole('button', { name: 'English', exact: true }).click();
+  await page.route('**/api/v1/predictions', (route) => {
+    expect(route.request().headers()['accept-language']).toBe('en');
+    return route.fulfill({ status: 400, json: { error: 'VALIDATION_ERROR',
+      fields: [{ field: 'age', message: 'A number is required' }] } });
+  });
+  await page.getByRole('button', { name: 'Get an educational prediction', exact: true }).click();
+  await expect(page.getByText('A number is required', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Возраст')).toHaveValue('52');
+  await expect(page.getByLabel('Возраст')).toBeFocused();
+});
+
 test('only server-supplied ranges and changed field configuration are used', async ({ page }) => {
   const fields = [{ key: 'measurement', label: 'Новый показатель', type: 'number', unit: 'ед.', required: true, min: 2, max: 10 }];
   await page.route('**/api/v1/model/info', (route) => route.fulfill({ json: {

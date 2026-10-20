@@ -42,6 +42,7 @@ describe('HTTP adapter', () => {
     expect(await api.predict({ age: 0, bmi: 27.4 }, signal())).toEqual(prediction);
     expect(fetchMock).toHaveBeenCalledWith('http://localhost:8080/api/v1/predictions', expect.objectContaining({
       method: 'POST', body: '{"age":0,"bmi":27.4}', cache: 'no-store', credentials: 'omit',
+      headers: { Accept: 'application/json', 'Accept-Language': 'ru', 'Content-Type': 'application/json' },
     }));
   });
   it('validates metadata received from GET', async () => {
@@ -51,6 +52,9 @@ describe('HTTP adapter', () => {
   it.each([
     [400, { error: 'VALIDATION_ERROR', fields: [{ field: 'age', message: 'От 18 до 90' }] }, 'validation'],
     [400, { error: 'BAD_REQUEST' }, 'unexpected'],
+    [400, { error: 'INVALID_REQUEST', message: 'Invalid request' }, 'badRequest'],
+    [503, { error: 'MODEL_UNAVAILABLE', message: 'Model unavailable' }, 'modelUnavailable'],
+    [500, { error: 'SYSTEM_ERROR', message: 'Internal details must not be displayed' }, 'server'],
     [503, {}, 'server'], [403, {}, 'badRequest'], [200, { value: 3 }, 'unexpected'],
   ])('handles status %s', async (status, response, kind) => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(response, { status })));
@@ -59,6 +63,20 @@ describe('HTTP adapter', () => {
   it('handles non-JSON responses', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<html>Error</html>')));
     await expect(createHttpApi('', 1000).predict({}, signal())).rejects.toMatchObject({ kind: 'unexpected' });
+  });
+  it('keeps proxy failures understandable even when the response is not JSON', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Bad gateway', { status: 502 })));
+    await expect(createHttpApi('', 1000).getModelInfo(signal())).rejects.toMatchObject({ kind: 'server' });
+  });
+  it('sends the selected language for metadata and prediction requests', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(Response.json(demoModelInfo))
+      .mockResolvedValueOnce(Response.json(prediction));
+    vi.stubGlobal('fetch', fetchMock);
+    const api = createHttpApi('', 1000);
+    await api.getModelInfo(signal(), 'kk');
+    await api.predict({ age: 52 }, signal(), 'en');
+    expect(fetchMock.mock.calls[0]?.[1].headers['Accept-Language']).toBe('kk');
+    expect(fetchMock.mock.calls[1]?.[1].headers['Accept-Language']).toBe('en');
   });
   it('reports network failure without fallback', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
