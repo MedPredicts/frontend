@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { copies, translateMessage } from './index';
 import { ru } from './ru';
-import { demoModelInfo, localizedDemoModel } from '../config/indicator';
+import { demoModelInfo, isDemoResponse, localizedDemoModel } from '../config/indicator';
 import { formatPrediction } from '../validation';
 import type { FieldDefinition } from '../types';
 
@@ -29,5 +29,11 @@ describe('localization', () => {
     expect(demoModelInfo.unit).toBe('мм рт. ст.');
     expect(formatPrediction(134.23456, null, 'en')).toBe('134.23456');
     expect(formatPrediction(134.23456, 1, 'kk')).toBe('134,2');
+  });
+  it('recognizes explicit demo responses and the legacy version marker', () => {
+    expect(isDemoResponse({ demo: true, modelVersion: 'server-demo-v2' })).toBe(true);
+    expect(isDemoResponse({ modelVersion: 'demo-example' })).toBe(true);
+    expect(isDemoResponse({ demo: false, modelVersion: 'MedPredict-SBP-v1' })).toBe(false);
+    expect(isDemoResponse(undefined)).toBe(false);
   });
 });

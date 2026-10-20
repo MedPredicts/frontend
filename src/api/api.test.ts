@@ -13,6 +13,19 @@ describe('runtime contract', () => {
     expect(parsePrediction(prediction)).toEqual(prediction);
     expect(parseModelInfo(demoModelInfo)).toEqual(demoModelInfo);
   });
+  it('preserves explicit trained and demo semantics while accepting legacy responses', () => {
+    const semantics = { demo: false, predictionType: 'estimated_current_measurement' } as const;
+    expect(parsePrediction({ ...prediction, ...semantics })).toEqual({ ...prediction, ...semantics });
+    expect(parseModelInfo({ ...demoModelInfo, modelVersion: 'MedPredict-SBP-v1', ...semantics }))
+      .toMatchObject(semantics);
+    expect(parsePrediction({ ...prediction, modelVersion: 'server-demo-v2', demo: true }).demo).toBe(true);
+  });
+  it.each([{ demo: 'false' }, { demo: null }, { predictionType: 'future_forecast' }, { predictionType: null }])(
+    'rejects malformed or unsupported prediction semantics %j', (semantics) => {
+      expect(() => parsePrediction({ ...prediction, ...semantics })).toThrow();
+      expect(() => parseModelInfo({ ...demoModelInfo, ...semantics })).toThrow();
+    },
+  );
   it.each([null, {}, { ...prediction, predictedValue: '134.2' }, { ...prediction, predictedValue: Infinity },
     { ...prediction, unit: '' }, { ...prediction, modelVersion: 1 }, { ...prediction, disclaimer: {} }])(
     'rejects malformed prediction response', (value) => expect(() => parsePrediction(value)).toThrow(),

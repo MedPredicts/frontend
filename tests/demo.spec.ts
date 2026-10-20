@@ -5,15 +5,15 @@ test('complete demo journey, repeat request and invalidate a stale result', asyn
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await expect(page).toHaveTitle('MedPredict — учебный прогноз');
+  await expect(page).toHaveTitle('MedPredict — учебная оценка');
   await expect(page.getByText('Демонстрационный режим', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expectNoOverflow(page);
   await page.getByRole('button', { name: 'Перейти к форме' }).click();
   await expect(page.getByLabel('Возраст')).toBeFocused();
   await fillExample(page);
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
-  await expect(page.getByRole('button', { name: 'Получить учебный прогноз' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
+  await expect(page.getByRole('button', { name: 'Получить учебную оценку' })).toBeDisabled();
   await expect(page.getByText('134,2', { exact: true })).toBeVisible();
   await expect(page.getByText('Фиксированный демонстрационный пример')).toBeVisible();
   await expect(page.getByText('Версия демопримера: demo-example')).toBeVisible();
@@ -21,7 +21,7 @@ test('complete demo journey, repeat request and invalidate a stale result', asyn
   await page.getByRole('button', { name: 'Изменить данные' }).click();
   await expect(page.getByLabel('Возраст')).toHaveValue('52');
   await expect(page.getByText('134,2', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('134,2', { exact: true })).toBeVisible();
   await page.getByLabel('Глюкоза').fill('6');
   await expect(page.getByText('134,2', { exact: true })).toHaveCount(0);
@@ -31,14 +31,14 @@ test('complete demo journey, repeat request and invalidate a stale result', asyn
 
 test('empty required fields and malformed numeric input have linked errors', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('Заполните обязательное поле.', { exact: true })).toHaveCount(5);
   await expect(page.getByLabel('Возраст')).toBeFocused();
   await expect(page.getByLabel('Возраст')).toHaveAttribute('aria-invalid', 'true');
   await expect(page.getByLabel('Возраст')).toHaveAttribute('aria-describedby', /field-age-error/);
   await fillExample(page);
   await page.getByLabel('Возраст').fill('не число');
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('Введите число, например 27,4. Буквы и другие символы недопустимы.', { exact: true })).toBeVisible();
   await expect(page.getByText('134,2', { exact: true })).toHaveCount(0);
 });
@@ -69,7 +69,7 @@ test('keyboard navigation, submit and edit remain usable', async ({ page }, test
   await page.keyboard.press('Tab');
   await page.keyboard.type('5,9');
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Получить учебный прогноз' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Получить учебную оценку' })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.getByText('134,2', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Систолическое давление', exact: true })).toBeFocused();
@@ -78,12 +78,12 @@ test('keyboard navigation, submit and edit remain usable', async ({ page }, test
 test('cancel and editing in flight never show an old result', async ({ page }) => {
   await page.goto('/');
   await fillExample(page);
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await page.getByRole('button', { name: 'Отменить запрос' }).click();
   await expect(page.getByRole('status')).toHaveText('Запрос отменён. Можно изменить данные или отправить их снова.');
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await page.getByLabel('Возраст').fill('53');
-  await expect(page.getByRole('heading', { name: 'Здесь появится прогноз' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Здесь появится оценка' })).toBeVisible();
   // Wait longer than the fixture latency to prove the cancelled response cannot reappear.
   await page.waitForTimeout(1100);
   await expect(page.getByText('134,2', { exact: true })).toHaveCount(0);
@@ -96,7 +96,7 @@ test('language picker translates the demo without losing input, errors or an in-
   expect(await logo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   await fillExample(page);
   await page.getByLabel('Возраст').fill('abc');
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.locator('.language-picker summary img')).toHaveAttribute('src', '/flags/ru.svg');
   await page.getByText('Рус', { exact: true }).click();
   const flags = page.locator('.language-options img');
@@ -105,7 +105,7 @@ test('language picker translates the demo without losing input, errors or an in-
   await expect(page.getByRole('button', { name: 'Русский', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Қазақша', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'kk');
-  await expect(page).toHaveTitle('MedPredict — оқу мақсатындағы болжам');
+  await expect(page).toHaveTitle('MedPredict — оқу мақсатындағы бағалау');
   await expect(page.getByLabel('Жас', { exact: false })).toHaveValue('abc');
   await expect(page.getByText('Сан енгізіңіз, мысалы 27,4. Әріптер мен басқа таңбаларды қолдануға болмайды.', { exact: true })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Тіл', exact: true })).toBeHidden();
@@ -118,7 +118,7 @@ test('language picker translates the demo without losing input, errors or an in-
   await expect(page.getByText('Enter a number, for example 27.4. Letters and other characters are not allowed.', { exact: true })).toBeVisible();
   await page.getByRole('textbox', { name: /^Age/ }).fill('52');
   await expect(page.getByLabel('Sex', { exact: false })).toHaveValue('male');
-  await page.getByRole('button', { name: 'Get an educational prediction', exact: true }).click();
+  await page.getByRole('button', { name: 'Get an educational estimate', exact: true }).click();
   await page.getByText('Eng', { exact: true }).click();
   await page.getByRole('button', { name: 'Қазақша', exact: true }).click();
   await expect(page.getByText('134,2', { exact: true })).toBeVisible();
@@ -187,7 +187,7 @@ test('PDF downloads directly, blocks duplicate export, retries asset failure and
   await expect(page.getByText('Учебный проект студентов Astana IT University', { exact: true })).toBeVisible();
   await expect(page.getByText('Astana IT University студенттерінің оқу жобасы', { exact: true })).toBeVisible();
   await fillExample(page);
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('134,2', { exact: true })).toBeVisible();
   let fail = true;
   let fontWaiting = false;

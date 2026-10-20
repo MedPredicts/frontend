@@ -12,14 +12,14 @@ test('Spring Boot metadata → form → HTTP prediction → labelled result → 
   let predictions = 0;
   page.on('request', (req) => { if (req.method() === 'POST' && req.url().endsWith('/api/v1/predictions')) predictions++; });
   await page.goto('/');
-  await expect(page).toHaveURL('http://127.0.0.1:5173/');
-  await expect(page).toHaveTitle('MedPredict — учебный прогноз');
+  await expect(page).toHaveURL(new URL('/', testInfo.project.use.baseURL).href);
+  await expect(page).toHaveTitle('MedPredict — учебная оценка');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.locator('vite-error-overlay')).toHaveCount(0);
   await expect(page.getByText('API · серверное демо', { exact: true })).toBeVisible();
   await fillExample(page);
   const response = page.waitForResponse((res) => res.request().method() === 'POST' && res.url().endsWith('/api/v1/predictions'));
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   expect((await response).status()).toBe(200);
   await expect(page.getByText('134,2', { exact: true })).toBeVisible();
   await expect(page.getByText('Фиксированный демонстрационный пример', { exact: true })).toBeVisible();
@@ -49,7 +49,7 @@ test('Spring Boot validation is localized and linked to the field, then retry su
     postData: JSON.stringify({ ...route.request().postDataJSON(), age: 'invalid' }),
   }));
   const response = page.waitForResponse((res) => res.url().endsWith('/api/v1/predictions'));
-  await page.getByRole('button', { name: 'Get an educational prediction', exact: true }).click();
+  await page.getByRole('button', { name: 'Get an educational estimate', exact: true }).click();
   const rejected = await response;
   expect(rejected.status()).toBe(400);
   const error = await rejected.json();

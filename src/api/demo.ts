@@ -32,7 +32,7 @@ export function createDemoApi(scenario: DemoScenario): PredictionApi {
         [{ field: 'age', message: ru.apiErrors.demoValidation }]);
       if (scenario === 'unavailable') throw new ApiError('server', ru.apiErrors.demoUnavailable);
       return { predictedValue: 134.2, unit: demoModelInfo.unit,
-        modelVersion: 'demo-example', disclaimer: ru.disclaimer };
+        modelVersion: 'demo-example', demo: true, disclaimer: ru.disclaimer };
     },
   };
 }

@@ -7,17 +7,22 @@ const record = (value: unknown): value is Record<string, unknown> =>
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 const optionalText = (value: unknown) => value === undefined || text(value);
+const validSemantics = (value: Record<string, unknown>) =>
+  (value.predictionType === undefined || value.predictionType === 'estimated_current_measurement')
+  && (value.demo === undefined || typeof value.demo === 'boolean');
 const unexpected = () => new ApiError('unexpected', ru.apiErrors.unexpected);
 
 export function parsePrediction(value: unknown, expectedUnit?: string): Prediction {
   if (!record(value) || !finite(value.predictedValue) || !text(value.unit)
-    || !optionalText(value.modelVersion) || !optionalText(value.disclaimer)
+    || !optionalText(value.modelVersion) || !optionalText(value.disclaimer) || !validSemantics(value)
     || (expectedUnit !== undefined && value.unit !== expectedUnit)) throw unexpected();
   return {
     predictedValue: value.predictedValue,
     unit: value.unit,
     ...(value.modelVersion === undefined ? {} : { modelVersion: value.modelVersion as string }),
     ...(value.disclaimer === undefined ? {} : { disclaimer: value.disclaimer as string }),
+    ...(value.predictionType === undefined ? {} : { predictionType: value.predictionType as Prediction['predictionType'] }),
+    ...(value.demo === undefined ? {} : { demo: value.demo as boolean }),
   };
 }
 
@@ -51,7 +56,7 @@ function parseField(value: unknown): FieldDefinition {
 // GET contract implemented by MedPredicts/backend; validate before enabling input.
 export function parseModelInfo(value: unknown): ModelInfo {
   if (!record(value) || !text(value.indicatorName) || !text(value.unit)
-    || !optionalText(value.modelVersion)
+    || !optionalText(value.modelVersion) || !validSemantics(value)
     || !(value.decimalPlaces === null || (finite(value.decimalPlaces)
       && Number.isInteger(value.decimalPlaces) && value.decimalPlaces >= 0 && value.decimalPlaces <= 20))
     || !Array.isArray(value.fields) || value.fields.length === 0) throw unexpected();
@@ -59,7 +64,9 @@ export function parseModelInfo(value: unknown): ModelInfo {
   if (new Set(fields.map((field) => field.key)).size !== fields.length) throw unexpected();
   return { indicatorName: value.indicatorName, unit: value.unit,
     decimalPlaces: value.decimalPlaces, fields,
-    ...(value.modelVersion === undefined ? {} : { modelVersion: value.modelVersion as string }) };
+    ...(value.modelVersion === undefined ? {} : { modelVersion: value.modelVersion as string }),
+    ...(value.predictionType === undefined ? {} : { predictionType: value.predictionType as ModelInfo['predictionType'] }),
+    ...(value.demo === undefined ? {} : { demo: value.demo as boolean }) };
 }
 
 export function parseValidationError(value: unknown): ApiError {

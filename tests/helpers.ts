@@ -11,7 +11,7 @@ export async function fillExample(page: Page) {
 
 export async function mockModel(page: Page) {
   await page.route('**/api/v1/model/info', (route) => route.fulfill({ json: {
-    ...demoModelInfo, decimalPlaces: null, modelVersion: '1.0.0',
+    ...demoModelInfo, decimalPlaces: null, modelVersion: '1.0.0', demo: undefined,
   } }));
 }
 
