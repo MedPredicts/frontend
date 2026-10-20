@@ -13,7 +13,7 @@ test('typed real adapter sends the exact payload, guards rapid submission and pr
     await new Promise((resolve) => setTimeout(resolve, 200));
     await route.fulfill({ json: { predictedValue: 134.23456, unit: 'мм рт. ст.', modelVersion: '1.0.0', disclaimer: 'Ограничение сервера.' } });
   });
-  await page.goto('/');
+  await page.goto('/#/predict');
   await expect(page.getByText('Подключение к API', { exact: true })).toBeVisible();
   await fillExample(page);
   await page.locator('form').evaluate((form: HTMLFormElement) => { form.requestSubmit(); form.requestSubmit(); form.requestSubmit(); });
@@ -32,7 +32,7 @@ test('server field validation preserves input and allows corrected retry', async
     return route.fulfill(count === 1 ? { status: 400, json: { error: 'VALIDATION_ERROR', fields: [{ field: 'age', message: 'Возраст должен быть от 18 до 90 лет' }] } }
       : { json: { predictedValue: 135.5, unit: 'мм рт. ст.' } });
   });
-  await page.goto('/');
+  await page.goto('/#/predict');
   await fillExample(page);
   await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('Возраст должен быть от 18 до 90 лет', { exact: true })).toBeVisible();
@@ -53,7 +53,7 @@ for (const kind of ['network', 'server', 'unknown', 'malformed', 'unit', 'timeou
       if (kind === 'unit') return route.fulfill({ json: { predictedValue: 134.2, unit: 'wrong unit' } });
       return route.fulfill({ json: { predictedValue: '134.2', unit: 'мм рт. ст.' } });
     });
-    await page.goto('/');
+    await page.goto('/#/predict');
     await fillExample(page);
     await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
     await expect(page.getByRole('heading', { name: 'Оценка не получена' })).toBeVisible();
@@ -75,7 +75,7 @@ test('metadata failure blocks form and can be retried', async ({ page }) => {
   await page.route('**/api/v1/model/info', (route) => {
     return route.fulfill(available ? { json: demoModelInfo } : { json: { incomplete: true } });
   });
-  await page.goto('/');
+  await page.goto('/#/predict');
   await expect(page.getByRole('heading', { name: 'Не удалось загрузить описание модели' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Получить учебную оценку' })).toHaveCount(0);
   available = true;
@@ -88,7 +88,7 @@ test('MODEL_UNAVAILABLE explains the missing server model and blocks prediction'
   await page.route('**/api/v1/model/info', (route) => route.fulfill({ status: 503,
     json: { error: 'MODEL_UNAVAILABLE', message: 'Unavailable model' } }));
   await page.route('**/api/v1/predictions', () => { posts++; });
-  await page.goto('/');
+  await page.goto('/#/predict');
   await expect(page.getByRole('alert')).toContainText('Модель на сервере недоступна.');
   await expect(page.getByRole('button', { name: 'Получить учебную оценку' })).toHaveCount(0);
   await page.locator('.language-picker summary').click();
@@ -102,7 +102,7 @@ test('server demo is labelled while preserving HTTP privacy and server units', a
   await page.route('**/api/v1/predictions', (route) => route.fulfill({ json: {
     predictedValue: 134.2, unit: 'мм рт. ст.', modelVersion: 'demo-example', disclaimer: 'DEMO: fixed server example.',
   } }));
-  await page.goto('/');
+  await page.goto('/#/predict');
   await expect(page.getByText('API · серверное демо', { exact: true })).toBeVisible();
   await expect(page.locator('.contract-note')).toContainText('обученная модель не используется');
   await fillExample(page);
@@ -115,7 +115,7 @@ test('server demo is labelled while preserving HTTP privacy and server units', a
 });
 
 test('selected UI language reaches the backend without clearing the form', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/predict');
   await fillExample(page);
   await page.locator('.language-picker summary').click();
   await page.getByRole('button', { name: 'English', exact: true }).click();
@@ -139,7 +139,7 @@ test('only server-supplied ranges and changed field configuration are used', asy
     expect(route.request().postDataJSON()).toEqual({ measurement: 2.5 });
     return route.fulfill({ json: { predictedValue: 3, unit: 'ед.' } });
   });
-  await page.goto('/');
+  await page.goto('/#/predict');
   await page.getByLabel('Новый показатель').fill('1');
   await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('Значение должно быть не меньше 2.', { exact: true })).toBeVisible();
@@ -156,7 +156,7 @@ test('real PDF exports the existing response without another prediction or demo 
     requests++;
     return route.fulfill({ json: { predictedValue: 141.98765, unit: 'мм рт. ст.' } });
   });
-  await page.goto('/');
+  await page.goto('/#/predict');
   await fillExample(page);
   await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('141,98765', { exact: true })).toBeVisible();
@@ -190,8 +190,8 @@ test('trained current estimate keeps localized safety, server units, accessible 
     return route.fulfill({ json: { predictedValue: 126.7, unit: trained.unit,
       demo: false, predictionType: trained.predictionType, modelVersion: trained.modelVersion } });
   });
-  await page.goto('/');
-  await expect(page).toHaveURL('http://127.0.0.1:4174/');
+  await page.goto('/#/predict');
+  await expect(page).toHaveURL('http://127.0.0.1:4174/#/predict');
   await expect(page).toHaveTitle(copies.ru.pageTitle);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.locator('vite-error-overlay')).toHaveCount(0);
@@ -236,7 +236,7 @@ test('explicit demo marker labels a server example independently of its version'
     predictedValue: 134.2, unit: demoModelInfo.unit, modelVersion: 'server-demo-v2', demo: true,
     predictionType: 'estimated_current_measurement',
   } }));
-  await page.goto('/');
+  await page.goto('/#/predict');
   await expect(page.locator('.mode-label')).toHaveText(copies.ru.serverDemo);
   await fillExample(page);
   await page.getByRole('button', { name: copies.ru.submit, exact: true }).click();

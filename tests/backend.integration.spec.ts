@@ -11,7 +11,7 @@ test('Spring Boot metadata → form → HTTP prediction → labelled result → 
   page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
   let predictions = 0;
   page.on('request', (req) => { if (req.method() === 'POST' && req.url().endsWith('/api/v1/predictions')) predictions++; });
-  await page.goto('/');
+  await page.goto('/#/predict');
   await expect(page).toHaveURL(new URL('/', testInfo.project.use.baseURL).href);
   await expect(page).toHaveTitle('MedPredict — учебная оценка');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -40,7 +40,7 @@ test('Spring Boot metadata → form → HTTP prediction → labelled result → 
 });
 
 test('Spring Boot validation is localized and linked to the field, then retry succeeds', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/predict');
   await fillExample(page);
   await page.locator('.language-picker summary').click();
   await page.getByRole('button', { name: 'English', exact: true }).click();

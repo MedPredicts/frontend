@@ -19,8 +19,8 @@ test('trained Spring Boot inference → current estimate → localized limitatio
   page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
   let posts = 0;
   page.on('request', (req) => { if (req.method() === 'POST' && req.url().endsWith('/api/v1/predictions')) posts++; });
-  await page.goto('/');
-  await expect(page).toHaveURL('http://127.0.0.1:5175/');
+  await page.goto('/#/predict');
+  await expect(page).toHaveURL('http://127.0.0.1:5175/#/predict');
   await expect(page).toHaveTitle(copies.ru.pageTitle);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.locator('vite-error-overlay')).toHaveCount(0);
@@ -64,7 +64,7 @@ test('trained Spring Boot inference → current estimate → localized limitatio
 });
 
 test('trained backend rejects invalid synthetic input without a fabricated result and the form can retry', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/predict');
   for (const [key, value] of Object.entries({ age: '52', bmi: '27.4', totalCholesterol: '5.6', glucose: '5.9' })) {
     await page.locator(`#field-${key}`).fill(value);
   }
