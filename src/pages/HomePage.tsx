@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { mode } from '../config/environment';
 import { copies, translateMessage, type Language } from '../i18n';
-import { localizedDemoModel } from '../config/indicator';
+import { isDemoResponse, localizedDemoModel } from '../config/indicator';
 import { LanguagePicker } from '../components/LanguagePicker';
 import { usePrediction } from '../hooks/usePrediction';
 import { Field } from '../components/Field';
@@ -18,7 +18,8 @@ export function HomePage() {
   const demo = mode === 'demo';
   const retryAction = flow.state.status === 'error' || (flow.state.status === 'loading' && retrying);
   const model = flow.metadata.status === 'ready' ? demo ? localizedDemoModel(copy) : flow.metadata.model : undefined;
-  const serverDemo = !demo && model?.modelVersion === 'demo-example';
+  const serverDemo = !demo && isDemoResponse(model);
+  const estimated = !demo && !serverDemo && model?.predictionType === 'estimated_current_measurement';
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -42,7 +43,7 @@ export function HomePage() {
       <div className="header-inner">
         <a className="brand" href="#main" aria-label={copy.brandLink}><img className="brand-logo" src="/logo.png" alt={copy.brand} width="994" height="414" /></a>
         <nav aria-label={copy.navigation}><a href="#how-it-works">{copy.how}</a><a href="#about">{copy.about}</a></nav>
-        <div className="header-actions"><span className="mode-label">{demo ? copy.demo : serverDemo ? copy.serverDemo : mode === 'real' ? copy.real : copy.unconfigured}</span>
+        <div className="header-actions"><span className="mode-label">{demo ? copy.demo : serverDemo ? copy.serverDemo : estimated ? copy.estimateMode : mode === 'real' ? copy.real : copy.unconfigured}</span>
           <LanguagePicker language={language} copy={copy} onChange={setLanguage} /></div>
       </div>
     </header>
@@ -92,7 +93,7 @@ export function HomePage() {
         <ResultPanel copy={copy} language={language} state={flow.state} model={model} demo={demo} onCancel={flow.cancel}
           onEdit={() => { flow.invalidate(); goToForm(); }} />
       </div>
-      <section id="about" className="about-section" aria-labelledby="about-heading"><h2 id="about-heading">{copy.aboutTitle}</h2><p>{copy.aboutText}</p><p className="privacy-detail">{copy.privacyDetail}</p></section>
+      <section id="about" className="about-section" aria-labelledby="about-heading"><h2 id="about-heading">{copy.aboutTitle}</h2><p>{estimated ? copy.estimateAbout : copy.aboutText}</p><p className="privacy-detail">{copy.privacyDetail}</p></section>
       <section className="student-project" aria-label={copy.studentProject}>
         <div className="project-logos">
           <span className="project-medpredict"><img src="/logo.png" alt="MedPredict" width="994" height="414" /></span>

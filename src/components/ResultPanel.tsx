@@ -6,6 +6,7 @@ import { translateMessage, type Language } from '../i18n';
 import { formatPrediction } from '../validation';
 import { Icon } from './Icon';
 import type { Report } from '../pdf/report';
+import { isDemoResponse } from '../config/indicator';
 
 function PdfDownload({ report, copy }: { report: Report; copy: Copy }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -61,7 +62,9 @@ interface Props {
 
 export function ResultPanel({ state, copy, language, model, demo, onEdit, onCancel }: Props) {
   const heading = useRef<HTMLHeadingElement>(null);
-  const example = demo || (state.status === 'success' && state.result.modelVersion === 'demo-example');
+  const example = demo || isDemoResponse(model) || (state.status === 'success' && isDemoResponse(state.result));
+  const estimated = !example && state.status === 'success'
+    && (state.result.predictionType ?? model?.predictionType) === 'estimated_current_measurement';
   useEffect(() => {
     if (state.status === 'success') heading.current?.focus();
   }, [state.status]);
@@ -71,12 +74,14 @@ export function ResultPanel({ state, copy, language, model, demo, onEdit, onCanc
     <div className="result-content" aria-live="polite" aria-atomic="true">
       {state.status === 'success' && model ? <div className="success-result">
         {example && <p className="result-tag">{copy.demoResult}</p>}
+        {estimated && <p className="result-tag">{copy.estimateResult}</p>}
         <h3 tabIndex={-1} ref={heading}>{model.indicatorName}</h3>
         <p className="prediction-value"><span>{formatPrediction(state.result.predictedValue, model.decimalPlaces, language)}</span><span className="prediction-unit">{demo ? model.unit : state.result.unit}</span></p>
         {state.result.modelVersion && <p className="model-version">{example ? copy.demoVersion : copy.modelVersion}: {state.result.modelVersion}</p>}
         {example && <p className="demo-explanation">{copy.demoExplanation}</p>}
-        <div className="result-disclaimer"><Icon name="info" /><p>{copy.disclaimer}.
-          {!demo && state.result.disclaimer && state.result.disclaimer !== copy.disclaimer && <span className="server-disclaimer">{state.result.disclaimer}</span>}
+        {estimated && <p className="demo-explanation">{copy.estimateExplanation}</p>}
+        <div className="result-disclaimer"><Icon name="info" /><p>{estimated ? copy.estimateDisclaimer : `${copy.disclaimer}.`}
+          {!demo && state.result.disclaimer && state.result.disclaimer !== copy.disclaimer && state.result.disclaimer !== copy.estimateDisclaimer && <span className="server-disclaimer">{state.result.disclaimer}</span>}
         </p></div>
         <button className="button button-secondary" type="button" onClick={onEdit}><Icon name="edit" />{copy.edit}</button>
         <PdfDownload key={language} copy={copy} report={{ model, result: state.result, input: state.input, demo, language }} />

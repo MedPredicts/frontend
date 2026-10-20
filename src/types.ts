@@ -15,6 +15,8 @@ export interface ModelInfo {
   decimalPlaces: number | null;
   fields: FieldDefinition[];
   modelVersion?: string;
+  predictionType?: 'estimated_current_measurement';
+  demo?: boolean;
 }
 
 export type FormValues = Record<string, string>;
@@ -26,6 +28,8 @@ export interface Prediction {
   unit: string;
   modelVersion?: string;
   disclaimer?: string;
+  predictionType?: 'estimated_current_measurement';
+  demo?: boolean;
 }
 
 export interface PredictionApi {

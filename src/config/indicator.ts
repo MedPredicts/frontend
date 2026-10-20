@@ -1,12 +1,17 @@
 import type { ModelInfo } from '../types';
 import type { Copy } from '../i18n/ru';
 
+export function isDemoResponse(value: { demo?: boolean; modelVersion?: string } | undefined): boolean {
+  return value?.demo === true || value?.modelVersion === 'demo-example';
+}
+
 // Preliminary example from the report; no medical ranges have been approved.
 export const demoModelInfo: ModelInfo = {
   indicatorName: 'Систолическое давление',
   unit: 'мм рт. ст.',
   decimalPlaces: 1,
   modelVersion: 'demo-example',
+  demo: true,
   fields: [
     { key: 'age', label: 'Возраст', type: 'number', unit: 'лет', required: true },
     {

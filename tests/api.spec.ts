@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { demoModelInfo } from '../src/config/indicator';
+import { copies } from '../src/i18n';
 import { expectNoOverflow, fillExample, mockModel } from './helpers';
 
 test.beforeEach(async ({ page }) => mockModel(page));
@@ -33,12 +34,12 @@ test('server field validation preserves input and allows corrected retry', async
   });
   await page.goto('/');
   await fillExample(page);
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('Возраст должен быть от 18 до 90 лет', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Возраст')).toBeFocused();
   await expect(page.getByLabel('Глюкоза')).toHaveValue('5,9');
   await page.getByLabel('Возраст').fill('53');
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('135,5', { exact: true })).toBeVisible();
 });
 
@@ -54,8 +55,8 @@ for (const kind of ['network', 'server', 'unknown', 'malformed', 'unit', 'timeou
     });
     await page.goto('/');
     await fillExample(page);
-    await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
-    await expect(page.getByRole('heading', { name: 'Прогноз не получен' })).toBeVisible();
+    await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
+    await expect(page.getByRole('heading', { name: 'Оценка не получена' })).toBeVisible();
     const messages = {
       network: 'Не удалось связаться с сервером.', server: 'Сервис временно недоступен.',
       unknown: 'Сервер сообщил об ошибке неизвестного поля.', malformed: 'Сервер вернул неожиданный ответ.',
@@ -76,7 +77,7 @@ test('metadata failure blocks form and can be retried', async ({ page }) => {
   });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Не удалось загрузить описание модели' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Получить учебный прогноз' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Получить учебную оценку' })).toHaveCount(0);
   available = true;
   await page.getByRole('button', { name: 'Попробовать снова' }).click();
   await expect(page.getByLabel('Возраст')).toBeVisible();
@@ -89,7 +90,7 @@ test('MODEL_UNAVAILABLE explains the missing server model and blocks prediction'
   await page.route('**/api/v1/predictions', () => { posts++; });
   await page.goto('/');
   await expect(page.getByRole('alert')).toContainText('Модель на сервере недоступна.');
-  await expect(page.getByRole('button', { name: 'Получить учебный прогноз' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Получить учебную оценку' })).toHaveCount(0);
   await page.locator('.language-picker summary').click();
   await page.getByRole('button', { name: 'Қазақша', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Сервердегі модель қолжетімсіз.');
@@ -105,10 +106,10 @@ test('server demo is labelled while preserving HTTP privacy and server units', a
   await expect(page.getByText('API · серверное демо', { exact: true })).toBeVisible();
   await expect(page.locator('.contract-note')).toContainText('обученная модель не используется');
   await fillExample(page);
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('Фиксированный демонстрационный пример', { exact: true })).toBeVisible();
   await expect(page.getByText('Версия демопримера: demo-example')).toBeVisible();
-  await expect(page.locator('.privacy')).toHaveText('Данные отправляются серверу для прогноза.');
+  await expect(page.locator('.privacy')).toHaveText('Данные отправляются серверу для оценки.');
   await expect(page.locator('.server-disclaimer')).toContainText('DEMO: fixed server example.');
   await expectNoOverflow(page);
 });
@@ -123,7 +124,7 @@ test('selected UI language reaches the backend without clearing the form', async
     return route.fulfill({ status: 400, json: { error: 'VALIDATION_ERROR',
       fields: [{ field: 'age', message: 'A number is required' }] } });
   });
-  await page.getByRole('button', { name: 'Get an educational prediction', exact: true }).click();
+  await page.getByRole('button', { name: 'Get an educational estimate', exact: true }).click();
   await expect(page.getByText('A number is required', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Возраст')).toHaveValue('52');
   await expect(page.getByLabel('Возраст')).toBeFocused();
@@ -140,10 +141,10 @@ test('only server-supplied ranges and changed field configuration are used', asy
   });
   await page.goto('/');
   await page.getByLabel('Новый показатель').fill('1');
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('Значение должно быть не меньше 2.', { exact: true })).toBeVisible();
   await page.getByLabel('Новый показатель').fill('2,5');
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByRole('heading', { name: 'Другой прогноз', exact: true })).toBeVisible();
   await expect(page.getByText('3,00', { exact: true })).toBeVisible();
 });
@@ -157,7 +158,7 @@ test('real PDF exports the existing response without another prediction or demo 
   });
   await page.goto('/');
   await fillExample(page);
-  await page.getByRole('button', { name: 'Получить учебный прогноз' }).click();
+  await page.getByRole('button', { name: 'Получить учебную оценку' }).click();
   await expect(page.getByText('141,98765', { exact: true })).toBeVisible();
   for (let index = 0; index < 2; index++) {
     const pending = page.waitForEvent('download');
@@ -170,4 +171,76 @@ test('real PDF exports the existing response without another prediction or demo 
   await expect(page.locator('.model-version')).toHaveCount(0);
   await page.getByLabel('Возраст').fill('53');
   await expect(page.getByRole('button', { name: 'Скачать PDF', exact: true })).toHaveCount(0);
+});
+
+test('trained current estimate keeps localized safety, server units, accessible focus and PDF without retaining inputs', async ({ page }, testInfo) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+  const trained = { ...demoModelInfo, demo: false, predictionType: 'estimated_current_measurement',
+    modelVersion: 'MedPredict-SBP-v1', indicatorName: 'Оценка текущего систолического давления',
+    fields: demoModelInfo.fields.map((field) => field.key === 'glucose'
+      ? { ...field, label: 'Глюкоза плазмы натощак', hint: 'Натощак, ммоль/л' } : field),
+  };
+  await page.route('**/api/v1/model/info', (route) => route.fulfill({ json: trained }));
+  let posts = 0;
+  await page.route('**/api/v1/predictions', (route) => {
+    posts++;
+    expect(route.request().postDataJSON()).toEqual({ age: 52, sex: 'male', bmi: 27.4, totalCholesterol: 5.6, glucose: 5.9 });
+    return route.fulfill({ json: { predictedValue: 126.7, unit: trained.unit,
+      demo: false, predictionType: trained.predictionType, modelVersion: trained.modelVersion } });
+  });
+  await page.goto('/');
+  await expect(page).toHaveURL('http://127.0.0.1:4174/');
+  await expect(page).toHaveTitle(copies.ru.pageTitle);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.locator('vite-error-overlay')).toHaveCount(0);
+  await expect(page.locator('.mode-label')).toHaveText(copies.ru.estimateMode);
+  await expect(page.getByLabel('Глюкоза плазмы натощак')).toBeVisible();
+  await fillExample(page);
+  await page.getByRole('button', { name: copies.ru.submit, exact: true }).click();
+  await expect(page.getByRole('heading', { name: trained.indicatorName, exact: true })).toBeFocused();
+  for (const language of ['ru', 'kk', 'en'] as const) {
+    const copy = copies[language];
+    if (language !== 'ru') {
+      await page.locator('.language-picker summary').click();
+      await page.getByRole('button', { name: language === 'kk' ? 'Қазақша' : 'English', exact: true }).click();
+    }
+    await expect(page.locator('.result-tag')).toHaveText(copy.estimateResult);
+    await expect(page.locator('.demo-explanation')).toHaveText(copy.estimateExplanation);
+    await expect(page.locator('.result-disclaimer')).toHaveText(copy.estimateDisclaimer);
+    await expect(page.locator('.prediction-unit')).toHaveText(trained.unit);
+    await expect(page.locator('.model-version')).toHaveText(`${copy.modelVersion}: ${trained.modelVersion}`);
+    await expect(page.locator('.privacy')).toHaveText(copy.realPrivacy);
+    await expectNoOverflow(page);
+  }
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: copies.en.downloadPdf, exact: true }).click();
+  const pdf = await pending;
+  await pdf.saveAs(testInfo.outputPath('trained-estimate.pdf'));
+  expect(await pdf.failure()).toBeNull();
+  expect(posts).toBe(1);
+  expect(errors).toEqual([]);
+  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
+  await page.locator('.result-panel').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `/private/tmp/medpredict-trained-${testInfo.project.name}.png` });
+  await page.getByLabel('Возраст').fill('53');
+  await expect(page.getByRole('button', { name: copies.en.downloadPdf, exact: true })).toHaveCount(0);
+});
+
+test('explicit demo marker labels a server example independently of its version', async ({ page }) => {
+  await page.route('**/api/v1/model/info', (route) => route.fulfill({ json: {
+    ...demoModelInfo, modelVersion: 'server-demo-v2', demo: true,
+  } }));
+  await page.route('**/api/v1/predictions', (route) => route.fulfill({ json: {
+    predictedValue: 134.2, unit: demoModelInfo.unit, modelVersion: 'server-demo-v2', demo: true,
+    predictionType: 'estimated_current_measurement',
+  } }));
+  await page.goto('/');
+  await expect(page.locator('.mode-label')).toHaveText(copies.ru.serverDemo);
+  await fillExample(page);
+  await page.getByRole('button', { name: copies.ru.submit, exact: true }).click();
+  await expect(page.locator('.result-tag')).toHaveText(copies.ru.demoResult);
+  await expect(page.locator('.model-version')).toHaveText(`${copies.ru.demoVersion}: server-demo-v2`);
+  await expect(page.getByText(copies.ru.estimateExplanation, { exact: true })).toHaveCount(0);
 });

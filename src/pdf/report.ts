@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import { copies, type Language } from '../i18n';
 import type { ModelInfo, Prediction, PredictionInput } from '../types';
 import { formatPrediction } from '../validation';
+import { isDemoResponse } from '../config/indicator';
 
 const reportColors = Object.fromEntries([...tokenCss.matchAll(/--([a-z-]+):\s*(#[a-f0-9]+)/gi)]
   .map((match) => [match[1], match[2]]));
@@ -64,7 +65,8 @@ export function reportFilename(date: Date): string {
 
 export function createReportPdf(report: Report, assets: ReportAssets, date: Date): jsPDF {
   const { model, result, input, demo, language } = report;
-  const example = demo || result.modelVersion === 'demo-example';
+  const example = demo || isDemoResponse(model) || isDemoResponse(result);
+  const estimated = !example && (result.predictionType ?? model.predictionType) === 'estimated_current_measurement';
   if (!Number.isFinite(result.predictedValue) || (!demo && result.unit !== model.unit)) throw new Error('Invalid PDF result');
   const copy = copies[language];
   const doc = new jsPDF({ format: 'a4', unit: 'mm', compress: true, putOnlyUsedFonts: true });
@@ -89,6 +91,8 @@ export function createReportPdf(report: Report, assets: ReportAssets, date: Date
     font(size, bold);
     const lines: string[] = doc.splitTextToSize(text, 174);
     const height = size * 0.5;
+    const paragraphHeight = lines.length * height;
+    if (y + paragraphHeight > 275 && paragraphHeight <= 226) nextPage();
     for (const line of lines) {
       if (y + height > 275) nextPage();
       doc.text(line, 18, y);
@@ -101,7 +105,9 @@ export function createReportPdf(report: Report, assets: ReportAssets, date: Date
   paragraph(copy.studentProject, 10);
   paragraph(`${copy.reportDate}: ${date.toLocaleString(language === 'kk' ? 'kk-KZ' : language === 'ru' ? 'ru-RU' : 'en-GB')}`, 9);
   if (example) paragraph(copy.reportDemo, 11, true);
+  if (estimated) paragraph(copy.estimateResult, 11, true);
   paragraph(model.indicatorName, 15, true);
+  if (estimated) paragraph(copy.estimateExplanation);
   paragraph(copy.formTitle, 12, true);
 
   const widths = [91, 38, 45];
@@ -143,8 +149,8 @@ export function createReportPdf(report: Report, assets: ReportAssets, date: Date
   paragraph(`${formatPrediction(result.predictedValue, model.decimalPlaces, language)} ${demo ? model.unit : result.unit}`, 22, true);
   if (result.modelVersion) paragraph(`${example ? copy.demoVersion : copy.modelVersion}: ${result.modelVersion}`, 9);
   y += 4;
-  paragraph(`${copy.disclaimer}.`, 10);
-  if (!demo && result.disclaimer && result.disclaimer !== copy.disclaimer) paragraph(result.disclaimer, 9);
+  paragraph(estimated ? copy.estimateDisclaimer : `${copy.disclaimer}.`, 10);
+  if (!demo && result.disclaimer && result.disclaimer !== copy.disclaimer && result.disclaimer !== copy.estimateDisclaimer) paragraph(result.disclaimer, 9);
   for (let page = 1; page <= doc.getNumberOfPages(); page++) {
     doc.setPage(page); font(9);
     doc.text(String(page), 192, 286, { align: 'right' });

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { jsPDF } from 'jspdf';
 import { copies } from '../i18n';
 import { localizedDemoModel } from '../config/indicator';
 import { createReportPdf, reportFilename, type ReportAssets } from './report';
@@ -14,6 +15,7 @@ const date = new Date(2026, 9, 15, 9, 7);
 const model = localizedDemoModel(copies.kk);
 const report = { model, input: { age: 52, sex: 'female', bmi: 27.4, totalCholesterol: 5.6, glucose: 5.9 },
   result: { predictedValue: 134.2, unit: model.unit }, demo: true, language: 'kk' as const };
+afterEach(() => vi.restoreAllMocks());
 
 describe('PDF report', () => {
   it('uses a local calendar date in the download filename', () => {
@@ -45,5 +47,30 @@ describe('PDF report', () => {
   it('exports localized demo units while retaining the original response unit', () => {
     const pdf = createReportPdf({ ...report, result: { predictedValue: 134.2, unit: 'мм рт. ст.' } }, assets, date);
     expect(pdf.getNumberOfPages()).toBe(1);
+  });
+  it.each(['ru', 'kk', 'en'] as const)('includes current-estimate semantics and all research limitations in the %s PDF', (language) => {
+    const paragraphs = vi.spyOn(jsPDF.API as unknown as Pick<jsPDF, 'splitTextToSize'>, 'splitTextToSize');
+    const copy = copies[language];
+    const trained = { ...localizedDemoModel(copy), demo: false, modelVersion: 'MedPredict-SBP-v1',
+      predictionType: 'estimated_current_measurement' as const };
+    const pdf = createReportPdf({ ...report, model: trained, language, demo: false,
+      result: { predictedValue: 126.7, unit: trained.unit, demo: false, predictionType: trained.predictionType,
+        modelVersion: trained.modelVersion, disclaimer: 'Additional model-specific limitation.' } }, assets, date);
+    const text = paragraphs.mock.calls.map(([value]) => value);
+    expect(text).toContain(copy.estimateResult);
+    expect(text).toContain(copy.estimateExplanation);
+    expect(text).toContain(copy.estimateDisclaimer);
+    expect(text).toContain('Additional model-specific limitation.');
+    expect(text).not.toContain(copy.reportDemo);
+    expect(text).toContain(`${copy.modelVersion}: MedPredict-SBP-v1`);
+    expect(pdf.output()).toMatch(/^%PDF-/);
+  });
+  it('labels explicit server demo with a new version and does not describe it as trained inference', () => {
+    const paragraphs = vi.spyOn(jsPDF.API as unknown as Pick<jsPDF, 'splitTextToSize'>, 'splitTextToSize');
+    createReportPdf({ ...report, demo: false, model: { ...model, demo: false, modelVersion: 'server-demo-v2' },
+      result: { predictedValue: 134.2, unit: model.unit, demo: true, modelVersion: 'server-demo-v2' } }, assets, date);
+    const text = paragraphs.mock.calls.map(([value]) => value);
+    expect(text).toContain(copies.kk.reportDemo);
+    expect(text).not.toContain(copies.kk.estimateResult);
   });
 });
