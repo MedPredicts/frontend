@@ -4,6 +4,7 @@ import { configuredApi } from '../config/environment';
 import { ApiError, errorMessage } from '../api/errors';
 import { parsePrediction } from '../api/contract';
 import { ru } from '../i18n/ru';
+import type { Language } from '../i18n';
 import { validateInput } from '../validation';
 
 type MetadataState = { status: 'loading' } | { status: 'error'; message: string }
@@ -11,7 +12,7 @@ type MetadataState = { status: 'loading' } | { status: 'error'; message: string 
 export type PredictionState = { status: 'idle'; message?: string } | { status: 'loading' }
   | { status: 'success'; result: Prediction; input: PredictionInput } | { status: 'error'; message: string };
 
-export function usePrediction() {
+export function usePrediction(language: Language = 'ru') {
   const [metadata, setMetadata] = useState<MetadataState>({ status: 'loading' });
   const [reload, setReload] = useState(0);
   const [values, setValues] = useState<FormValues>({});
@@ -19,13 +20,16 @@ export function usePrediction() {
   const [state, setState] = useState<PredictionState>({ status: 'idle' });
   const service = useRef<PredictionApi | null>(null);
   const request = useRef<AbortController | null>(null);
+  const currentLanguage = useRef(language);
+
+  useEffect(() => { currentLanguage.current = language; }, [language]);
 
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
       try {
         const api = configuredApi();
-        const model = await api.getModelInfo(controller.signal);
+        const model = await api.getModelInfo(controller.signal, currentLanguage.current);
         if (controller.signal.aborted) return;
         service.current = api;
         setMetadata({ status: 'ready', model });
@@ -69,7 +73,7 @@ export function usePrediction() {
     request.current = controller;
     setState({ status: 'loading' });
     try {
-      const response = await service.current.predict(checked.input, controller.signal);
+      const response = await service.current.predict(checked.input, controller.signal, language);
       if (request.current !== controller || controller.signal.aborted) return;
       setState({ status: 'success', result: parsePrediction(response, metadata.model.unit), input: checked.input });
     } catch (error) {

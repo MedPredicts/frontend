@@ -48,7 +48,7 @@ function parseField(value: unknown): FieldDefinition {
   throw unexpected();
 }
 
-// Proposed GET contract; must be agreed with the Spring Boot implementation.
+// GET contract implemented by MedPredicts/backend; validate before enabling input.
 export function parseModelInfo(value: unknown): ModelInfo {
   if (!record(value) || !text(value.indicatorName) || !text(value.unit)
     || !optionalText(value.modelVersion)

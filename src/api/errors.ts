@@ -1,6 +1,6 @@
 import { ru } from '../i18n/ru';
 
-export type ApiErrorKind = 'network' | 'timeout' | 'server' | 'badRequest' | 'unexpected' | 'validation' | 'configuration';
+export type ApiErrorKind = 'network' | 'timeout' | 'server' | 'modelUnavailable' | 'badRequest' | 'unexpected' | 'validation' | 'configuration';
 
 export class ApiError extends Error {
   constructor(

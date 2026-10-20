@@ -29,6 +29,6 @@ export interface Prediction {
 }
 
 export interface PredictionApi {
-  getModelInfo(signal: AbortSignal): Promise<ModelInfo>;
-  predict(input: PredictionInput, signal: AbortSignal): Promise<Prediction>;
+  getModelInfo(signal: AbortSignal, language?: 'ru' | 'kk' | 'en'): Promise<ModelInfo>;
+  predict(input: PredictionInput, signal: AbortSignal, language?: 'ru' | 'kk' | 'en'): Promise<Prediction>;
 }

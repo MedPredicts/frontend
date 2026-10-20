@@ -4,24 +4,32 @@ import { parseModelInfo, parsePrediction, parseValidationError } from './contrac
 import { ApiError } from './errors';
 
 export function createHttpApi(baseUrl: string, timeoutMs: number): PredictionApi {
-  async function request(path: string, signal: AbortSignal, body?: unknown): Promise<unknown> {
+  async function request(path: string, signal: AbortSignal, language: string, body?: unknown): Promise<unknown> {
     const timeout = AbortSignal.timeout(timeoutMs);
     const combined = AbortSignal.any([signal, timeout]);
     try {
       const response = await fetch(`${baseUrl.replace(/\/$/, '')}${path}`, {
         method: body === undefined ? 'GET' : 'POST',
         signal: combined,
-        headers: body === undefined ? { Accept: 'application/json' }
-          : { Accept: 'application/json', 'Content-Type': 'application/json' },
+        headers: { Accept: 'application/json', 'Accept-Language': language,
+          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         credentials: 'omit',
         cache: 'no-store',
         referrerPolicy: 'no-referrer',
       });
-      if (response.status >= 500) throw new ApiError('server', ru.apiErrors.server);
       let value: unknown;
       try { value = await response.json(); }
-      catch { throw new ApiError('unexpected', ru.apiErrors.unexpected); }
+      catch {
+        if (response.status >= 500) throw new ApiError('server', ru.apiErrors.server);
+        throw new ApiError('unexpected', ru.apiErrors.unexpected);
+      }
+      const code = typeof value === 'object' && value !== null && 'error' in value ? value.error : undefined;
+      if (response.status === 503 && code === 'MODEL_UNAVAILABLE') {
+        throw new ApiError('modelUnavailable', ru.apiErrors.modelUnavailable);
+      }
+      if (response.status >= 500) throw new ApiError('server', ru.apiErrors.server);
+      if (response.status === 400 && code === 'INVALID_REQUEST') throw new ApiError('badRequest', ru.apiErrors.badRequest);
       if (response.status === 400) throw parseValidationError(value);
       if (!response.ok) throw new ApiError('badRequest', ru.apiErrors.badRequest);
       return value;
@@ -33,7 +41,7 @@ export function createHttpApi(baseUrl: string, timeoutMs: number): PredictionApi
     }
   }
   return {
-    getModelInfo: async (signal) => parseModelInfo(await request('/api/v1/model/info', signal)),
-    predict: async (input, signal) => parsePrediction(await request('/api/v1/predictions', signal, input)),
+    getModelInfo: async (signal, language = 'ru') => parseModelInfo(await request('/api/v1/model/info', signal, language)),
+    predict: async (input, signal, language = 'ru') => parsePrediction(await request('/api/v1/predictions', signal, language, input)),
   };
 }
